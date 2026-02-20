@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Okey Oyunu</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#1a0e05;--felt:#1b4d2e;--gold:#c9a84c;--gold-light:#e8c96d;
+  --cream:#f5edd6;--red:#c0392b;--blue:#1565c0;--ytile:#b07d00;--btile:#111;
+  --panel:rgba(0,0,0,0.5);--tw:44px;--th:64px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);background-image:radial-gradient(ellipse at 30% 20%,#2a1505,#1a0e05 70%);
+  font-family:'Crimson Pro',serif;color:var(--cream);min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;padding:12px 8px 32px;}
+h1{font-family:'Cinzel Decorative',cursive;color:var(--gold);font-size:clamp(1.2rem,3.5vw,2rem);
+  letter-spacing:3px;text-shadow:0 2px 12px rgba(201,168,76,.4);margin-bottom:4px;}
+.subtitle{color:var(--gold-light);opacity:.7;font-style:italic;font-size:.88rem;margin-bottom:12px;}
+.table{background:var(--felt);background-image:radial-gradient(ellipse at center,#1f5934,#153d24 80%);
+  border-radius:20px;border:3px solid var(--gold);
+  box-shadow:0 0 0 6px #3d2a08,0 0 50px rgba(0,0,0,.7);
+  padding:14px;width:100%;max-width:1020px;}
+.opponents{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.opponent{background:var(--panel);border:1px solid rgba(201,168,76,.25);border-radius:10px;
+  padding:7px 10px;text-align:center;transition:border-color .3s,box-shadow .3s;}
+.opponent.active{border-color:rgba(201,168,76,.8);box-shadow:0 0 12px rgba(201,168,76,.25);}
+.opp-name{font-size:.72rem;color:var(--gold-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.opp-tiles{display:flex;justify-content:center;flex-wrap:wrap;gap:2px;}
+.tile-back{width:14px;height:22px;background:linear-gradient(145deg,#3d2a08,#5a3e10);
+  border:1px solid var(--gold);border-radius:2px;}
+.center{display:flex;align-items:center;justify-content:center;gap:28px;margin-bottom:10px;}
+.pile-wrap{text-align:center;}
+.pile-label{font-size:.7rem;color:var(--gold-light);text-transform:uppercase;letter-spacing:1px;opacity:.8;margin-bottom:4px;}
+.pile-count{font-size:.72rem;color:var(--cream);opacity:.6;margin-top:4px;}
+.draw-pile{width:48px;height:70px;background:linear-gradient(145deg,#3d2a08,#5a3e10,#3d2a08);
+  border:2px solid var(--gold);border-radius:7px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--gold);
+  box-shadow:2px 3px 12px rgba(0,0,0,.6);transition:transform .15s,box-shadow .15s;user-select:none;}
+.draw-pile:hover{transform:translateY(-3px);box-shadow:2px 8px 20px rgba(0,0,0,.7);}
+.draw-pile.off{opacity:.45;cursor:default;pointer-events:none;}
+.discard-area{width:60px;height:82px;border:2px dashed rgba(201,168,76,.35);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+/* TILE */
+.tile{width:var(--tw);height:var(--th);background:#f8f0dc;border:1.5px solid #b8a070;border-radius:5px;
+  box-shadow:1px 2px 5px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:grab;user-select:none;position:relative;
+  transition:transform .12s,box-shadow .12s,border-color .12s;flex-shrink:0;}
+.tile:active{cursor:grabbing;}
+.tile .tn{font-size:1.2rem;font-weight:700;line-height:1;}
+.tile .ts{font-size:1rem;line-height:1;margin-top:1px;}
+.tile.red .tn,.tile.red .ts{color:var(--red);}
+.tile.blue .tn,.tile.blue .ts{color:var(--blue);}
+.tile.yellow .tn,.tile.yellow .ts{color:var(--ytile);}
+.tile.black .tn,.tile.black .ts{color:var(--btile);}
+.tile.joker{background:linear-gradient(135deg,#fffae0,#ffd);border-color:var(--gold);}
+.tile.joker .tn{color:var(--gold);font-size:.9rem;}
+.tile.isokey{background:linear-gradient(135deg,#fffae0,#ffd);border-color:#e8b800;
+  box-shadow:0 0 6px rgba(232,184,0,.5),1px 2px 5px rgba(0,0,0,.4);}
+.tile.sel{border-color:var(--gold);box-shadow:0 0 0 2.5px var(--gold),1px 2px 5px rgba(0,0,0,.4);
+  transform:translateY(-6px);z-index:5;}
+.tile.ghost{opacity:.25;}
+/* RACK */
+.rack-section{background:var(--panel);border:1px solid rgba(201,168,76,.3);
+  border-radius:12px;padding:10px 12px 14px;margin-top:8px;}
+.rack-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.rack-title{font-family:'Cinzel Decorative',cursive;color:var(--gold);font-size:.82rem;}
+.rack-grid{display:grid;grid-template-columns:repeat(9,var(--tw));
+  grid-template-rows:repeat(2,var(--th));gap:5px;}
+.rack-slot{width:var(--tw);height:var(--th);border:1.5px dashed rgba(201,168,76,.18);
+  border-radius:5px;background:rgba(0,0,0,.12);position:relative;cursor:pointer;
+  transition:border-color .15s,background .15s;}
+.rack-slot.dov{border-color:var(--gold);background:rgba(201,168,76,.15);}
+.rack-slot>.tile{position:absolute;inset:0;width:100%;height:100%;cursor:grab;}
+/* INFO */
+.info-row{display:flex;gap:10px;justify-content:center;align-items:center;margin-bottom:6px;flex-wrap:wrap;}
+.chip{background:var(--panel);border:1px solid rgba(201,168,76,.3);border-radius:16px;
+  padding:3px 12px;font-size:.78rem;color:var(--gold-light);}
+.chip.blink{border-color:var(--gold);color:var(--gold);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
+.status{text-align:center;font-style:italic;font-size:.85rem;color:var(--gold-light);min-height:26px;margin-bottom:6px;}
+.status.err{color:#e74c3c;}.status.ok{color:#2ecc71;}
+.btn{background:linear-gradient(135deg,#b8860b,#c9a84c,#b8860b);border:none;color:#1a0e05;
+  font-family:'Crimson Pro',serif;font-weight:700;font-size:.82rem;padding:6px 16px;border-radius:16px;
+  cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);transition:transform .12s,box-shadow .12s;}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.5);}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.btn.ghost{background:transparent;border:1.5px solid var(--gold);color:var(--gold);}
+.btn.danger{background:linear-gradient(135deg,#7b1515,#c0392b,#7b1515);color:#fff;}
+.btns{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;
+  align-items:center;justify-content:center;}
+.overlay.show{display:flex;}
+.modal{background:linear-gradient(145deg,#2a1a06,#1a0e05);border:2px solid var(--gold);
+  border-radius:18px;padding:36px 40px;text-align:center;
+  box-shadow:0 0 60px rgba(201,168,76,.3);max-width:360px;width:90%;}
+.modal h2{font-family:'Cinzel Decorative',cursive;color:var(--gold);font-size:1.5rem;margin-bottom:10px;}
+.modal p{color:var(--cream);margin-bottom:22px;font-size:.98rem;line-height:1.6;}
+@media(max-width:640px){:root{--tw:34px;--th:52px;}.tile .tn{font-size:.95rem;}.tile .ts{font-size:.8rem;}}
+@media(max-width:420px){:root{--tw:28px;--th:44px;}.rack-grid{gap:3px;}.tile .tn{font-size:.8rem;}.tile .ts{font-size:.68rem;}}
+</style>
+</head>
+<body>
+<h1>✦ PDKS GAMING ✦</h1>
+<p class="subtitle">4 Kişilik Türk Okey</p>
+<div class="table">
+  <div class="opponents">
+    <div class="opponent" id="o0"><div class="opp-name" id="o0n">Oyuncu 2</div><div class="opp-tiles" id="o0t"></div></div>
+    <div class="opponent" id="o1"><div class="opp-name" id="o1n">Oyuncu 3</div><div class="opp-tiles" id="o1t"></div></div>
+    <div class="opponent" id="o2"><div class="opp-name" id="o2n">Oyuncu 4</div><div class="opp-tiles" id="o2t"></div></div>
+  </div>
+  <div class="center">
+    <div class="pile-wrap">
+      <div class="pile-label">Talon</div>
+      <div class="draw-pile" id="dp" onclick="hDraw()">✦</div>
+      <div class="pile-count" id="pc">—</div>
+    </div>
+    <div class="pile-wrap">
+      <div class="pile-label">Okey Taşı</div>
+      <div id="okw"></div>
+    </div>
+    <div class="pile-wrap">
+      <div class="pile-label">Atılan</div>
+      <div class="discard-area" id="da" onclick="hTakeDiscard()"></div>
+    </div>
+  </div>
+  <div class="info-row">
+    <div class="chip" id="tc">🎲 Sıra: Sen</div>
+    <div class="chip" id="phc">Taş çek</div>
+  </div>
+  <div class="status" id="st">Talon'dan taş çekerek başlayın.</div>
+  <div class="rack-section">
+    <div class="rack-header">
+      <div class="rack-title">🫵 Senin Taşların</div>
+      <div class="btns">
+        <button class="btn ghost" onclick="autoSort()">Sırala</button>
+        <button class="btn" id="bd" onclick="discardSel()" disabled>Taş At</button>
+        <button class="btn danger" id="bo" onclick="declOkey()" disabled>OKEY!</button>
+      </div>
+    </div>
+    <div class="rack-grid" id="rg"></div>
+  </div>
+</div>
+<div class="overlay" id="ov">
+  <div class="modal">
+    <h2 id="mt">🎉</h2><p id="mb"></p>
+    <button class="btn" onclick="init()">Yeni Oyun</button>
+  </div>
+</div>
+<script>
+const CLR=['red','blue','yellow','black'],SYM={red:'●',blue:'●',yellow:'●',black:'●'};
+const ROWS=2,COLS=9,SL=ROWS*COLS;
+let G={};
+
+function bDeck(){let id=0,d=[];for(let c=0;c<2;c++)for(const cl of CLR)for(let n=1;n<=13;n++)d.push({id:id++,cl,num:n,j:false});d.push({id:id++,cl:'joker',num:0,j:true});d.push({id:id++,cl:'joker',num:0,j:true});return shuf(d);}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function init(){
+  document.getElementById('ov').classList.remove('show');
+  const dk=bDeck();
+  const ind=dk.pop();
+  const on=ind.j?1:(ind.num===13?1:ind.num+1);
+  const oc=ind.j?'red':ind.cl;
+  const hs=[[],[],[],[]];
+  for(let p=0;p<4;p++)for(let i=0;i<14;i++)hs[p].push(dk.pop());
+  hs[0].push(dk.pop());
+  const rack=Array(SL).fill(null);
+  hs[0].forEach((t,i)=>{rack[i]=t;});
+  G={dk,on,oc,rack,opp:[hs[1],hs[2],hs[3]],dis:[],turn:0,phase:'discard',sel:null,dsrc:null,over:false};
+  render();
+  ss('Oyun başladı! Atmak istediğiniz taşı seçip "Taş At" butonuna basın.');
+}
+
+function render(){rOkey();rOpps();rRack();rDis();document.getElementById('pc').textContent=G.dk.length+' taş';rUI();}
+
+function rOkey(){const w=document.getElementById('okw');w.innerHTML='';const el=mTile({cl:G.oc,num:G.on,j:false,id:-1});el.style.cursor='default';el.draggable=false;w.appendChild(el);}
+
+function rOpps(){
+  for(let i=0;i<3;i++){
+    const h=G.opp[i];
+    const td=document.getElementById('o'+i+'t');td.innerHTML='';
+    h.forEach(()=>{const d=document.createElement('div');d.className='tile-back';td.appendChild(d);});
+    document.getElementById('o'+i+'n').textContent=(G.turn===i+1?'▶ ':'')+`Oyuncu ${i+2} · ${h.length} taş`;
+    document.getElementById('o'+i).classList.toggle('active',G.turn===i+1);
+  }
+}
+
+function rRack(){
+  const rg=document.getElementById('rg');rg.innerHTML='';
+  for(let s=0;s<SL;s++){
+    const sl=document.createElement('div');sl.className='rack-slot';sl.dataset.s=s;
+    sl.addEventListener('dragover',e=>{e.preventDefault();sl.classList.add('dov');});
+    sl.addEventListener('dragleave',()=>sl.classList.remove('dov'));
+    sl.addEventListener('drop',e=>{e.preventDefault();sl.classList.remove('dov');onDrop(s);});
+    sl.addEventListener('click',()=>onSC(s));
+    const t=G.rack[s];
+    if(t){
+      const el=mTile(t);
+      if(G.sel===s)el.classList.add('sel');
+      el.draggable=true;
+      el.addEventListener('dragstart',()=>{G.dsrc=s;setTimeout(()=>el.classList.add('ghost'),0);});
+      el.addEventListener('dragend',()=>{el.classList.remove('ghost');G.dsrc=null;});
+      el.addEventListener('click',e=>{e.stopPropagation();onSC(s);});
+      sl.appendChild(el);
+    }
+    rg.appendChild(sl);
+  }
+}
+
+function rDis(){
+  const a=document.getElementById('da');a.innerHTML='';
+  if(G.dis.length){
+    const el=mTile(G.dis[G.dis.length-1]);
+    el.style.width='100%';el.style.height='100%';
+    el.style.cursor=(G.phase==='draw'&&G.turn===0)?'pointer':'default';
+    el.draggable=false;a.appendChild(el);
+  }
+}
+
+function rUI(){
+  const my=G.turn===0;
+  const nm=['Sen','Oyuncu 2','Oyuncu 3','Oyuncu 4'];
+  const tc=document.getElementById('tc');
+  tc.textContent='🎲 Sıra: '+nm[G.turn];tc.classList.toggle('blink',my);
+  document.getElementById('phc').textContent=G.phase==='draw'?'Taş çek':'Taş at';
+  document.getElementById('dp').classList.toggle('off',!(my&&G.phase==='draw'));
+  const hs=G.sel!==null&&G.rack[G.sel]!==null;
+  document.getElementById('bd').disabled=!(my&&G.phase==='discard'&&hs);
+  document.getElementById('bo').disabled=!(my&&G.phase==='discard');
+}
+
+function mTile(t){
+  const el=document.createElement('div');
+  const isOk=!t.j&&t.cl===G.oc&&t.num===G.on;
+  if(t.j){el.className='tile joker';el.innerHTML='<span class="tn">★</span><span class="ts" style="font-size:.58rem;color:var(--gold)">JOKER</span>';}
+  else if(isOk){el.className='tile '+t.cl+' isokey';el.innerHTML=`<span class="tn">${t.num}</span><span class="ts">✦</span>`;el.title='OKEY taşı!';}
+  else{el.className='tile '+t.cl;el.innerHTML=`<span class="tn">${t.num}</span><span class="ts">${SYM[t.cl]}</span>`;}
+  return el;
+}
+
+function onSC(s){
+  if(G.turn!==0||G.phase!=='discard')return;
+  if(!G.rack[s]){if(G.sel!==null&&G.rack[G.sel]){G.rack[s]=G.rack[G.sel];G.rack[G.sel]=null;G.sel=null;}}
+  else G.sel=(G.sel===s)?null:s;
+  rRack();rUI();
+}
+
+function onDrop(to){
+  const fr=G.dsrc;if(fr===null||fr===to)return;
+  [G.rack[fr],G.rack[to]]=[G.rack[to],G.rack[fr]];
+  if(G.sel===fr)G.sel=to;G.dsrc=null;rRack();rUI();
+}
+
+function hDraw(){
+  if(G.turn!==0||G.phase!=='draw')return;
+  if(!G.dk.length){ss('Talon bitti!','err');return;}
+  pEmpty(G.dk.pop());G.phase='discard';render();ss('Taş çekildi. Atmak istediğiniz taşı seçin.');
+}
+
+function hTakeDiscard(){
+  if(G.turn!==0||G.phase!=='draw')return;
+  if(!G.dis.length){ss('Atılan taş yok.','err');return;}
+  pEmpty(G.dis.pop());G.phase='discard';render();ss('Atılan taşı aldınız. Bir taş atın.');
+}
+
+function discardSel(){
+  if(G.turn!==0||G.phase!=='discard')return;
+  if(G.sel===null||!G.rack[G.sel]){ss('Önce atmak istediğiniz taşı seçin.','err');return;}
+  const t=G.rack[G.sel];G.rack[G.sel]=null;G.dis.push(t);G.sel=null;
+  G.phase='draw';G.turn=1;render();ss('Taş atıldı. Rakipler oynuyor…');
+  setTimeout(runOpps,700);
+}
+
+function autoSort(){
+  const tiles=G.rack.filter(Boolean);
+  tiles.sort((a,b)=>{
+    if(a.j&&!b.j)return -1;if(!a.j&&b.j)return 1;
+    const oa=a.cl===G.oc&&a.num===G.on,ob=b.cl===G.oc&&b.num===G.on;
+    if(oa&&!ob)return -1;if(!oa&&ob)return 1;
+    const ci=CLR.indexOf(a.cl)-CLR.indexOf(b.cl);
+    return ci!==0?ci:a.num-b.num;
+  });
+  G.rack=Array(SL).fill(null);tiles.forEach((t,i)=>G.rack[i]=t);G.sel=null;rRack();rUI();
+}
+
+function declOkey(){
+  if(G.turn!==0||G.phase!=='discard')return;
+  const h=G.rack.filter(Boolean);
+  if(h.length!==15){ss(`Elinizde ${h.length} taş var, 15 olmalı.`,'err');return;}
+  if(valH(h)){G.over=true;showM('🎉 Tebrikler!','Eliniz geçerli — Okey yaptınız!');}
+  else ss('Eliniz henüz geçerli değil.','err');
+}
+
+function runOpps(){
+  if(G.over)return;let opp=0;
+  function nxt(){
+    if(opp>2){G.turn=0;G.phase='draw';render();ss('Sıra sizde!');return;}
+    G.turn=opp+1;render();
+    setTimeout(()=>{
+      const h=G.opp[opp];
+      if(G.dk.length)h.push(G.dk.pop());else if(G.dis.length)h.push(G.dis.pop());
+      if(h.length>=15&&valH(h)){G.over=true;showM(`Oyuncu ${opp+2} Kazandı!`,`Oyuncu ${opp+2} Okey yaptı!`);return;}
+      G.dis.push(h.splice(wIdx(h),1)[0]);opp++;render();setTimeout(nxt,420);
+    },480);
+  }
+  nxt();
+}
+
+function wIdx(h){
+  function sc(t){
+    if(t.j||(t.cl===G.oc&&t.num===G.on))return 999;
+    let s=0;h.forEach(o=>{if(o===t)return;if(o.num===t.num&&o.cl===t.cl)s+=6;else if(o.num===t.num)s+=3;else if(o.cl===t.cl&&Math.abs(o.num-t.num)<=2)s+=2;});
+    return s;
+  }
+  let mi=0,mv=Infinity;h.forEach((t,i)=>{const v=sc(t);if(v<mv){mv=v;mi=i;}});return mi;
+}
+
+function valH(h){
+  if(h.length!==15)return false;
+  const w=h.filter(t=>t.j||(t.cl===G.oc&&t.num===G.on)).length;
+  const nm=h.filter(t=>!t.j&&!(t.cl===G.oc&&t.num===G.on));
+  return tryP(nm,w);
+}
+function tryP(tiles,w){
+  if(!tiles.length)return true;
+  if(tiles.length+w<3)return false;
+  const t=tiles[0],rest=tiles.slice(1);
+  const sn=rest.filter(r=>r.num===t.num&&r.cl!==t.cl);
+  for(let u=Math.min(sn.length,2);u>=0;u--){const jn=2-u;if(w<jn)continue;const used=sn.slice(0,u),rem=rest.filter(r=>!used.includes(r));if(tryP(rem,w-jn))return true;}
+  const sc=rest.filter(r=>r.cl===t.cl).sort((a,b)=>a.num-b.num);
+  const n1=sc.find(r=>r.num===t.num+1),n2=sc.find(r=>r.num===t.num+2);
+  if(n1&&n2&&tryP(rest.filter(r=>r!==n1&&r!==n2),w))return true;
+  if(n1&&w>0&&tryP(rest.filter(r=>r!==n1),w-1))return true;
+  if(n2&&w>0&&tryP(rest.filter(r=>r!==n2),w-1))return true;
+  if(w>=2&&tryP(rest,w-2))return true;
+  return false;
+}
+
+function pEmpty(t){const i=G.rack.indexOf(null);if(i!==-1)G.rack[i]=t;}
+function ss(m,c){const e=document.getElementById('st');e.textContent=m;e.className='status'+(c?' '+c:'');}
+function showM(t,b){document.getElementById('mt').textContent=t;document.getElementById('mb').textContent=b;document.getElementById('ov').classList.add('show');}
+
+init();
+</script>
+</body>
+</html>
