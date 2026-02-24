@@ -706,7 +706,11 @@ function onDrop(to){
 
 function hDraw(){
   if(G.turn!==0||G.phase!=='draw')return;
-  if(!G.dk.length){ss('Talon bitti!','err');return;}
+  if(!G.dk.length){
+    G.over=true;
+    showWin('⏳ Talon Bitti!','Hiçbir oyuncu kazanamadı — berabere!',[]);
+    return;
+  }
   addRack(G.dk.pop());G.phase='discard';render();
   ss('Taş çekildi. Atmak istediğiniz taşı seçip "Taş At"a basın.');
 }
@@ -768,6 +772,12 @@ function runOpps(){
     setTimeout(()=>{
       if(G.over)return;
       const h=G.opp[opp];
+      // Talon ve atılan her ikisi de boşsa oyun biter
+      if(!G.dk.length&&!G.dis.length){
+        G.over=true;
+        showWin('⏳ Talon Bitti!','Hiçbir oyuncu kazanamadı — berabere!',[]);
+        return;
+      }
       if(G.dk.length)h.push(G.dk.pop());else if(G.dis.length)h.push(G.dis.pop());
       if(h.length>=15){
         let won=false;
@@ -888,20 +898,22 @@ function showWin(title,body,hand){
   document.getElementById('mt').textContent=title;
   document.getElementById('mb').textContent=body;
   const wh=document.getElementById('wh');wh.innerHTML='';
-  // Taşları ıstakaya yerleştir — 15 slot, boşlukları da göster
-  const slots=Math.max(hand.length,14);
-  hand.forEach((t,i)=>{
-    const slot=document.createElement('div');slot.className='win-slot';
-    const el=mkTile(t);
-    el.draggable=false;
-    el.style.animationDelay=(i*0.04)+'s';
-    slot.appendChild(el);
-    wh.appendChild(slot);
-  });
-  // Kalan boş yuvalar
-  for(let i=hand.length;i<slots;i++){
-    const slot=document.createElement('div');slot.className='win-slot';
-    wh.appendChild(slot);
+  const bw=document.querySelector('.win-board-wrap');
+  if(!hand||hand.length===0){
+    bw.style.display='none';
+  } else {
+    bw.style.display='';
+    const slots=Math.max(hand.length,14);
+    hand.forEach((t,i)=>{
+      const slot=document.createElement('div');slot.className='win-slot';
+      const el=mkTile(t);el.draggable=false;
+      el.style.animationDelay=(i*0.04)+'s';
+      slot.appendChild(el);wh.appendChild(slot);
+    });
+    for(let i=hand.length;i<slots;i++){
+      const slot=document.createElement('div');slot.className='win-slot';
+      wh.appendChild(slot);
+    }
   }
   document.getElementById('ov').classList.add('show');
 }
